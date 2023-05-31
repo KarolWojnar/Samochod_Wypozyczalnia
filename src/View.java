@@ -2,9 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -29,7 +27,7 @@ public class View extends JFrame{
     private JTextField wojeTF;
     private JTextField miastoTF;
     private JTextField kodPTF;
-    String imie = null;
+    public static String imie = null;
     String nazwisko = null;
     String data_ur = null;
     String nr_tel = null;
@@ -41,7 +39,7 @@ public class View extends JFrame{
     public static String name = null;
     private Connection con = null;
     private ResultSet rs = null;
-    int idKilent;
+    public static int idKilent;
     public static int w = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
     public static int h = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
     public static void main(String[] args) {
@@ -111,6 +109,26 @@ public class View extends JFrame{
                 idKilent = rs.getInt("Klient_id");
             }
             else{
+                try {
+                    String callProcedure = "{CALL DodajKlient(?, ?, ?, ?, ?, ?, ?, ?)};";
+                    CallableStatement statement = con.prepareCall(callProcedure);
+                    statement.setString(1, adres);
+                    statement.setString(2, woje);
+                    statement.setString(3, miasto);
+                    statement.setString(4, kodP);
+                    statement.setString(5, imie);
+                    statement.setString(6, naziwsko);
+                    statement.setDate(7, java.sql.Date.valueOf(data_ur));
+                    statement.setInt(8, Integer.parseInt(nr_tel));
+                    statement.execute();
+
+                    String getMaxId = "select Klient_id from klient where klient_id = (Select max(klient_id) from klient)";
+                    rs = con.prepareStatement(getMaxId).executeQuery();
+                    if(rs.next()) idKilent = rs.getInt("Klient_id");
+                    System.out.println(idKilent);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
         }catch (SQLException e){
@@ -120,3 +138,28 @@ public class View extends JFrame{
 
 
 }
+
+
+/*
+        PROCEDURA DODANIA KLIENTA DO BAZY
+
+
+DELIMITER//
+CREATE PROCEDURE DodajKlient(IN p_adres VARCHAR(20), IN p_wojewodztwo VARCHAR(25), IN p_miasto VARCHAR(30), IN p_kod_pocztowy VARCHAR(6),
+                             IN p_imie VARCHAR(20), IN p_nazwisko VARCHAR(20), IN p_data_urodzenia date, IN p_nr_telefonu INT(9))
+BEGIN
+
+	DECLARE s_adres_id INT;
+    DECLARE s_klient_id INT;
+
+	SELECT MAX(adres_id)+1 INTO s_adres_id FROM adres;
+
+	INSERT INTO adres (adres_id, adres, wojewodztwo, miasto, kod_pocztowy) VALUES (s_adres_id, p_adres, p_wojewodztwo, p_miasto, p_kod_pocztowy);
+
+    SELECT MAX(klient_id)+1 INTO s_klient_id FROM klient;
+
+    INSERT INTO klient (klient_id, adres_id, imie, nazwisko, data_urodzenia, nr_telefonu) VALUES (s_klient_id, s_adres_id, p_imie, p_nazwisko, p_data_urodzenia, p_nr_telefonu);
+
+END //
+DELIMITER ;
+ */

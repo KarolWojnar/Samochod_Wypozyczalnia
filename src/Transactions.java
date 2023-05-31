@@ -35,8 +35,11 @@ public class Transactions extends JFrame {
     private ResultSet rs = null;
     int i = 0;
     int[] tabOfId = new int[50];
+    public static int index = -1;
+    private int koszt;
 
     public static void main(String[] args) {
+        new Transactions().setVisible(true);
     }
 
     Transactions() {
@@ -54,7 +57,8 @@ public class Transactions extends JFrame {
         confirm.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                int index = car.getSelectedIndex();
+                index = car.getSelectedIndex();
+
                 String ubezp = ubez.getSelectedItem().toString();
                 String startDateString = datePicker1.getModel().getYear() + "-" + (datePicker1.getModel().getMonth() + 1) + "-" + datePicker1.getModel().getDay();
                 String endDateString = datePicker2.getModel().getYear() + "-" + (datePicker2.getModel().getMonth() + 1) + "-" + datePicker2.getModel().getDay();
@@ -82,11 +86,20 @@ public class Transactions extends JFrame {
                     if (choice == 0) {
                         conn = ConnectorDbase.mycon();
                         try {
-                            String sql = "INSERT INTO wypożyczenia";
-                            rs = conn.prepareStatement(sql).executeQuery();
+                            String sqlProc = "{CALL DodajWypozyczenie(?, ?, ?, ?, ?, ?)}";
+                            CallableStatement statement = conn.prepareCall(sqlProc);
+                            statement.setInt(1, View.idKilent);
+                            statement.setInt(2, tabOfId[index]);
+                            statement.setDate(3, java.sql.Date.valueOf(startDateString));
+                            statement.setDate(4, java.sql.Date.valueOf(endDateString));
+                            statement.setInt(5, koszt);
+                            statement.setString(6, ubezp);
+                            statement.execute();
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
+                        dispose();
+                        new Bye().setVisible(true);
                     }
                 }
             }
@@ -95,11 +108,9 @@ public class Transactions extends JFrame {
 
     public int returnPrice(String name, String ubez, String start, String end)
     {
-        int koszt = 0;
         try {
             String callProcedure = "{CALL ObliczKosztWypozyczenia(?, ?, ?, ?, ?)}";
             CallableStatement statement = conn.prepareCall(callProcedure);
-
             statement.setString(1, name);
             statement.setString(2, ubez);
             statement.setDate(3, java.sql.Date.valueOf(start));
@@ -170,9 +181,9 @@ BEGIN
     SELECT
         CASE typ_ubezpieczenia
             WHEN 'brak' THEN 1
-            WHEN 'od szkód własnych' THEN 1.4
-            WHEN 'od kradzieży' THEN 1.4
-            WHEN 'całkowite' THEN 1.8
+            WHEN 'od szkód własnych' THEN 1.3
+            WHEN 'od kradzieży' THEN 1.3
+            WHEN 'całkowite' THEN 1.5
             ELSE 0
         END INTO cena_ubezpieczenia;
 
@@ -182,4 +193,31 @@ BEGIN
 END //
 DELIMITER ;
 
+ */
+
+
+
+/*
+    Procedura dodająca rekrdy do wypożyczenia jesli klient zdecyduje sie na wypożyczenie i zmienia dostepność w tabeli samochody
+
+
+        DELIMITER //
+
+CREATE PROCEDURE DodajWypozyczenie(IN p_klient_id INT(11), IN p_samochod_id INT(11), IN p_data_wypozyczenia DATE, IN p_data_zwrotu DATE,
+                             	   IN p_koszt INT(8), IN p_typ_ubezpiecznia VARCHAR(25))
+BEGIN
+    DECLARE s_wypozyczenia_id INT;
+
+    SET @losowa_wartosc := FLOOR(RAND() * 10) + 1;
+
+    SELECT MAX(wypożyczenia_id)+1 INTO s_wypozyczenia_id FROM wypożyczenia;
+
+    INSERT INTO wypożyczenia (wypożyczenia_id, klient_id, samochód_id, Data_wypożyczenia, Data_zwrotu, Koszt, typ_ubezpieczenia, przydzielony_pracownik_id )
+   	VALUES  (s_wypozyczenia_id, p_klient_id, p_samochod_id, p_data_wypozyczenia, p_data_zwrotu, p_koszt, p_typ_ubezpiecznia, @losowa_wartosc);
+
+	UPDATE samochód SET dostepnosc="wypozyczony" where Samochód_id=p_samochod_id;
+
+END //
+
+DELIMITER ;
  */
