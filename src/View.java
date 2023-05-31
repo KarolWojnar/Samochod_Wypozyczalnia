@@ -121,7 +121,6 @@ public class View extends JFrame{
                     statement.setDate(7, java.sql.Date.valueOf(data_ur));
                     statement.setInt(8, Integer.parseInt(nr_tel));
                     statement.execute();
-
                     String getMaxId = "select Klient_id from klient where klient_id = (Select max(klient_id) from klient)";
                     rs = con.prepareStatement(getMaxId).executeQuery();
                     if(rs.next()) idKilent = rs.getInt("Klient_id");
