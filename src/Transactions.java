@@ -4,9 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -70,20 +68,51 @@ public class Transactions extends JFrame {
                 try {
                     startDate = sdf.parse(startDateString);
                     endDate = sdf.parse(endDateString);
-                    days = (int) ((endDate.getTime() - startDate.getTime())/(1000 * 60 * 60 * 24));
-                    today = (int) ((startDate.getTime() - todayDate.getTime())/(1000 * 60 * 60 * 24));
-                    System.out.println(tabOfId[index] + " " + ubezp + " " + startDate + " " + endDate + " roznica: " + days + " || " + today);
+                    days = (int) ((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                    today = (int) ((startDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
                 } catch (ParseException e) {
                     throw new RuntimeException(e);
                 }
-                if(days <= 0) JOptionPane.showMessageDialog(null, "Podaj prawidłową datę1");
-                else if(today < 0) JOptionPane.showMessageDialog(null, "Podaj prawidłową datę2");
+                if (days <= 0) JOptionPane.showMessageDialog(null, "Podaj prawidłową datę");
+                else if (today < 0) JOptionPane.showMessageDialog(null, "Podaj prawidłową datę");
                 else {
 
-                }
+                    int choice = JOptionPane.showConfirmDialog(null, "Czy taka cena Ci odpowiada: " + returnPrice(View.name, ubezp, startDateString, endDateString) + "?", "Cena", JOptionPane.YES_NO_OPTION);
 
+                    if (choice == 0) {
+                        conn = ConnectorDbase.mycon();
+                        try {
+                            String sql = "INSERT INTO wypożyczenia";
+                            rs = conn.prepareStatement(sql).executeQuery();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
         });
+    }
+
+    public int returnPrice(String name, String ubez, String start, String end)
+    {
+        int koszt = 0;
+        try {
+            String callProcedure = "{CALL ObliczKosztWypozyczenia(?, ?, ?, ?, ?)}";
+            CallableStatement statement = conn.prepareCall(callProcedure);
+
+            statement.setString(1, name);
+            statement.setString(2, ubez);
+            statement.setDate(3, java.sql.Date.valueOf(start));
+            statement.setDate(4, java.sql.Date.valueOf(end));
+            statement.registerOutParameter(5, Types.NUMERIC);
+            statement.execute();
+            koszt = statement.getInt(5);
+            System.out.println("Koszt wypożyczenia: " + koszt);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return koszt;
     }
 
     public void getCars() {
@@ -115,6 +144,42 @@ public class Transactions extends JFrame {
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e);
         }
-
     }
 }
+/*
+        Procedura obliczająca cenę wypozyczenia:
+
+        DELIMITER //
+
+CREATE PROCEDURE ObliczKosztWypozyczenia(IN Klasa VARCHAR(1), IN typ_ubezpieczenia VARCHAR(25),
+                                         IN data_wypożyczenia DATE, IN data_zwrotu DATE, OUT koszt DECIMAL(10, 2))
+BEGIN
+    DECLARE cena_samochodu DECIMAL(10, 2);
+    DECLARE cena_ubezpieczenia DECIMAL(10, 2);
+    DECLARE ilosc_dni INT;
+
+    SELECT
+        CASE Klasa
+            WHEN 'a' THEN 160
+            WHEN 'b' THEN 120
+            WHEN 'c' THEN 90
+            WHEN 'd' THEN 75
+            ELSE 0
+        END INTO cena_samochodu;
+
+    SELECT
+        CASE typ_ubezpieczenia
+            WHEN 'brak' THEN 1
+            WHEN 'od szkód własnych' THEN 1.4
+            WHEN 'od kradzieży' THEN 1.4
+            WHEN 'całkowite' THEN 1.8
+            ELSE 0
+        END INTO cena_ubezpieczenia;
+
+    SET ilosc_dni = DATEDIFF(data_zwrotu, data_wypozyczenia);
+
+    SET koszt = cena_samochodu * ilosc_dni * cena_ubezpieczenia;
+END //
+DELIMITER ;
+
+ */
