@@ -7,11 +7,6 @@ import java.awt.event.ActionListener;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.Temporal;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -20,19 +15,18 @@ public class Transactions extends JFrame {
     private JPanel samochod;
     private JPanel ubezpieczenie;
     private JPanel cena;
-    private JButton confirm;
     private JLabel price;
-    private JLabel startLabel = new JLabel("Wybież datę rozpoczęcia wypożyczenia");
-    private JLabel endLabel = new JLabel("Wybież datę końca wypożyczenia");
+    private JButton confirm;
+    private JLabel startLabel = new JLabel("Wybierz datę rozpoczęcia wypożyczenia | ");
+    private JLabel endLabel = new JLabel("Wybierz datę końca wypożyczenia");
     private JComboBox car;
     private JComboBox ubez;
     private JPanel okres;
-    JDatePicker datePicker1 = new JDatePicker();
-    JDatePicker datePicker2 = new JDatePicker();
-    public static int w = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-    public static int h = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+    private final JDatePicker datePicker1 = new JDatePicker();
+    private final JDatePicker datePicker2 = new JDatePicker();
+    public static int w = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth()/2;
+    public static int h = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight()/2;
     private Connection conn = null;
-    private ResultSet rs = null;
     int i = 0;
     int[] tabOfId = new int[50];
     public static int index = -1;
@@ -43,9 +37,9 @@ public class Transactions extends JFrame {
     }
 
     Transactions() {
-        this.setTitle("Options");
-        this.setDefaultCloseOperation(3);
-        this.setSize(w, h);
+        this.setTitle("Opcje wypożyczenia");
+        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        this.setBounds(w/2,h/2, w, h);
         this.getContentPane().add(panel1);
         okres.setLayout(new GridLayout(2, 2));
         okres.add(startLabel);
@@ -136,7 +130,7 @@ public class Transactions extends JFrame {
                     "INNER JOIN wypozyczalnia w ON s.wypozyczalnia_id = w.wypozyczalnia_id " +
                     "WHERE s.dostepnosc = 'dostepny' and s.Klasa = '" + View.name + "'" +
                     "order by s.samochód_id";
-            rs = conn.prepareStatement(sql).executeQuery();
+            ResultSet rs = conn.prepareStatement(sql).executeQuery();
             while (rs.next()) {
                         tabOfId[i++] = rs.getInt("Samochód_id");
                         car.addItem(rs.getString("Marka")

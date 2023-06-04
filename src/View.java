@@ -11,7 +11,6 @@ public class View extends JFrame{
     private JButton A;
     private JButton B;
     private JButton C;
-    private JButton Toyota;
     private JButton D;
     private JPanel panel1;
     private JPanel panel2;
@@ -35,21 +34,20 @@ public class View extends JFrame{
     String woje = null;
     String miasto = null;
     String kod_pocz = null;
-    private JPanel formPanel;
     public static String name = null;
     private Connection con = null;
     private ResultSet rs = null;
     public static int idKilent;
-    public static int w = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-    public static int h = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+    public static int w = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth()/2;
+    public static int h = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight()/2;
     public static void main(String[] args) {
         new View().setVisible(true);
     }
 
     View(){
-        super("essa");
+        super("Wypożyczalnia Samochodów");
         this.setDefaultCloseOperation(3);
-        this.setSize(new Dimension(w, h));
+        this.setBounds(w/2,h/2, w, h);
         this.setLayout(new GridLayout(1, 2));
         rPanel.setLayout(new GridLayout(2,1));
         rPanel.add(panel1);

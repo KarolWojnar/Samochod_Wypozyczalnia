@@ -24,7 +24,7 @@ public class Bye extends JFrame{
         new Bye().setVisible(true);
     }
     Bye() {
-        this.setTitle("Options");
+        this.setTitle("Gratulacje");
         this.setDefaultCloseOperation(3);
         this.setBounds(w/4 , h/3,w/2, h/4);
         this.getContentPane().add(panel1);
