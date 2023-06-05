@@ -122,7 +122,6 @@ public class View extends JFrame{
                     String getMaxId = "select Klient_id from klient where klient_id = (Select max(klient_id) from klient)";
                     rs = con.prepareStatement(getMaxId).executeQuery();
                     if(rs.next()) idKilent = rs.getInt("Klient_id");
-                    System.out.println(idKilent);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -141,22 +140,26 @@ public class View extends JFrame{
         PROCEDURA DODANIA KLIENTA DO BAZY
 
 
-DELIMITER//
-CREATE PROCEDURE DodajKlient(IN p_adres VARCHAR(20), IN p_wojewodztwo VARCHAR(25), IN p_miasto VARCHAR(30), IN p_kod_pocztowy VARCHAR(6),
-                             IN p_imie VARCHAR(20), IN p_nazwisko VARCHAR(20), IN p_data_urodzenia date, IN p_nr_telefonu INT(9))
 BEGIN
 
 	DECLARE s_adres_id INT;
     DECLARE s_klient_id INT;
 
-	SELECT MAX(adres_id)+1 INTO s_adres_id FROM adres;
+    IF (SELECT count(*) from adres) = 0 THEN
+    	SET s_adres_id := 1;
+	ELSE
+    	SELECT MAX(adres_id)+1 INTO s_adres_id FROM adres;
+    END IF;
 
-	INSERT INTO adres (adres_id, adres, wojewodztwo, miasto, kod_pocztowy) VALUES (s_adres_id, p_adres, p_wojewodztwo, p_miasto, p_kod_pocztowy);
+	INSERT INTO adres (adres_id, adres, województwo, miasto, kod_pocztowy) VALUES (s_adres_id, p_adres, p_wojewodztwo, p_miasto, p_kod_pocztowy);
 
-    SELECT MAX(klient_id)+1 INTO s_klient_id FROM klient;
+    IF (SELECT count(*) from klient) = 0 THEN
+    	SET s_klient_id := 1;
+	ELSE
+    	SELECT MAX(klient_id)+1 INTO s_klient_id FROM klient;
+    END IF;
 
     INSERT INTO klient (klient_id, adres_id, imie, nazwisko, data_urodzenia, nr_telefonu) VALUES (s_klient_id, s_adres_id, p_imie, p_nazwisko, p_data_urodzenia, p_nr_telefonu);
 
-END //
-DELIMITER ;
+END
  */
